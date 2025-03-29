@@ -8,7 +8,7 @@ export default function Header() {
   const path = useLocation().pathname;
   
   return (
-    <Navbar className="border-b-2">
+    <Navbar className="border-b-2 bg-white">
       <Link
         to="/"
         className="self-center whitespace-nowrap text-sm sm:text-xl font-semibold dark:text-white"
@@ -37,7 +37,7 @@ export default function Header() {
           <FaMoon />
         </Button>
         <Link to="/sign-in">
-          <Button gradientduotone="purpleToBlue">Sign In</Button>
+          <Button grgradientDuoTone="purpleToBlue" outline>Sign In</Button>
         </Link>
         <NavbarToggle />
       </div>
