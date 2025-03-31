@@ -37,7 +37,7 @@ export default function Header() {
           <FaMoon />
         </Button>
         <Link to="/sign-in">
-          <Button grgradientDuoTone="purpleToBlue" outline>Sign In</Button>
+          <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:bg-gradient-to-bl focus:ring-cyan-300 dark:focus:ring-cyan-800 outline" >Sign In</Button>
         </Link>
         <NavbarToggle />
       </div>
