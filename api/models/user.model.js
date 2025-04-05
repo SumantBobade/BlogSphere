@@ -20,7 +20,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 
         'https://www.pngmart.com/files/23/Profile-PNG-Photo.png'
-    }
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false,
+    },
 
 }, {timestamps:true}
 );
