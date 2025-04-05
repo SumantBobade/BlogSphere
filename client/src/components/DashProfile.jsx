@@ -1,11 +1,13 @@
 import { Button, TextInput } from 'flowbite-react'
 import React, { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux';
+import { signoutSuccess } from '../redux/user/userSlice';
 
 export default function DashProfile() {
     const { currentUser } = useSelector(state => state.user);
     const [imageFile, setImageFile] = useState(null);
     const [imageFileUrl, setImageFileUrl] = useState(null);
+    const dispatch = useDispatch();
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -22,6 +24,23 @@ export default function DashProfile() {
 
     const uploadingImage = async () => {
         console.log('uploading image...');
+    };
+
+    const handleSignout = async () => {
+        try {
+            const res = await fetch('/api/user/signout', {
+                method: 'POST',
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                console.log(data.message);
+            } else {
+                dispatch(signoutSuccess()); // Invoke the action creator
+            }
+            
+        } catch (error) {
+            console.log(error.message);
+        }
     };
   return (
     <div className='max-w-lg mx-auto p-3 w-full'>
@@ -52,7 +71,7 @@ export default function DashProfile() {
           </form>  
           <div className='text-red-500 flex justify-between mt-5'>
               <span className='cursor-pointer'>Delete Account</span>
-              <span className='cursor-pointer'>Sign Out</span>
+              <span className='cursor-pointer' onClick={handleSignout}>Sign Out</span>
           </div>
     </div>
   )
