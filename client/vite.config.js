@@ -12,7 +12,9 @@ export default defineConfig({
     },
     },
   },
-  plugins: [react(), flowbiteReact()],
+  plugins: [react(),
+    flowbiteReact()],
+  
   build: {
     rollupOptions: {
       external: ['tailwindcss/version.js']

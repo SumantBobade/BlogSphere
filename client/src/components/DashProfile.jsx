@@ -1,10 +1,11 @@
-import { Button, TextInput } from 'flowbite-react'
+import { Button, TextInput} from 'flowbite-react'
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { signoutSuccess } from '../redux/user/userSlice';
+import { Link } from 'react-router-dom';
 
 export default function DashProfile() {
-    const { currentUser } = useSelector(state => state.user);
+    const { currentUser, loading } = useSelector(state => state.user);
     const [imageFile, setImageFile] = useState(null);
     const [imageFileUrl, setImageFileUrl] = useState(null);
     const dispatch = useDispatch();
@@ -68,6 +69,18 @@ export default function DashProfile() {
               <Button type='submit' className="bg-gradient-to-br from-purple-600 to-blue-500 text-white hover:bg-gradient-to-bl focus:ring-blue-300 dark:focus:ring-blue-800" outline>
                   Update
               </Button>
+              {
+                  currentUser.isAdmin && (
+                      <Link to={'/create-post'}>
+                          <Button type='button'
+                          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:bg-gradient-to-l focus:ring-purple-200 dark:focus:ring-purple-800"
+                      >
+                          Create a post
+                      </Button>
+                      </Link>
+                  
+                  )
+              }
           </form>  
           <div className='text-red-500 flex justify-between mt-5'>
               <span className='cursor-pointer'>Delete Account</span>
