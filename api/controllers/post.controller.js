@@ -19,3 +19,14 @@ export const create = async (req, resizeBy, next) => {
         next(error);
     }
 }
+
+// Retrieve all posts
+export const getAllPosts = async (req, res) => {
+    try {
+        const posts = await Post.find();
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error fetching posts', error });
+    }
+};

@@ -2,27 +2,32 @@ import { Alert, Button, FileInput, Select, TextInput } from 'flowbite-react';
 import React, { useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { getDownloadURL, getStorage, uploadBytesResumable, ref } from "firebase/storage"; // Added import for 'ref'
-import { app } from '../firebase.js'; // Ensure your firebase setup is correct
+import { getDownloadURL, getStorage, uploadBytesResumable, ref } from "firebase/storage"; 
+import { app } from '../firebase.js'; 
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { useNavigate } from 'react-router-dom';
 
 export default function CreatePost() {
     const [file, setFile] = useState(null);
     const [imageUploadProgress, setImageUploadProgress] = useState(null);
     const [imageUploadError, setImageUploadError] = useState(null);
     const [formData, setFormData] = useState({ title: '', category: '', content: '' });
+    const [publishError, setPublishError] = useState(null);
+    const navigate = useNavigate();
 
     const handleUploadImage = async () => {
+        if (!file) {
+            setImageUploadError('Please select an image');
+            return;
+        }
+
         try {
-            if (!file) {
-                setImageUploadError('Please select an image');
-                return;
-            }
-            const storage = getStorage(app); // Make sure `app` is correctly initialized
-            const fileName = new Date().getTime() + '-' + file.name; // Fixed typo
+            const storage = getStorage(app);
+            const fileName = `${new Date().getTime()}-${file.name}`;
             const storageRef = ref(storage, fileName);
             const uploadTask = uploadBytesResumable(storageRef, file);
+
             uploadTask.on(
                 'state_changed',
                 (snapshot) => {
@@ -37,7 +42,7 @@ export default function CreatePost() {
                     getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                         setImageUploadProgress(null);
                         setImageUploadError(null);
-                        setFormData({ ...formData, image: downloadURL });
+                        setFormData((prevData) => ({ ...prevData, image: downloadURL }));
                     });
                 }
             );
@@ -50,17 +55,37 @@ export default function CreatePost() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData((prevData) => ({ ...prevData, [name]: value }));
     };
 
     const handleContentChange = (content) => {
-        setFormData({ ...formData, content });
+        setFormData((prevData) => ({ ...prevData, content }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle form data submission here
-        console.log('Form Data:', formData);
+        try {
+            const res = await fetch('/api/post/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setPublishError(data.message);
+                return;
+            }
+            setPublishError(null);
+            
+            if (res.ok) {
+                setPublishError(null);
+                navigate(`/post/$(data.slug`);
+            }
+        } catch (error) {
+            setPublishError('Something went wrong');
+        }
     };
 
     return (
@@ -72,22 +97,21 @@ export default function CreatePost() {
                         type='text'
                         placeholder='Title'
                         required
-                        id='title'
                         name='title'
-                        onChange={handleInputChange}
                         className='flex-1'
+                        onChange={handleInputChange}
                     />
                     <Select
                         required
                         name='category'
                         onChange={handleInputChange}
                     >
-                        <option value="uncategorized">Select a category</option>
+                        <option value="">Select a category</option>
                         <option value="javascript">JavaScript</option>
                         <option value="reactjs">React.js</option>
-                        <option value="nextjs">next.js</option>
+                        <option value="nextjs">Next.js</option>
                         <option value="python">Python</option>
-                        <option value="ml">ML</option>
+                        <option value="ml">Machine Learning</option>
                     </Select>
                 </div>
                 <div className='flex gap-4 items-center justify-between border-4 border-teal-500 border-dotted p-3'>
@@ -101,35 +125,25 @@ export default function CreatePost() {
                         className="bg-gradient-to-br from-green-400 to-blue-600 text-white hover:bg-gradient-to-bl focus:ring-green-200 dark:focus:ring-green-800"
                         outline
                         onClick={handleUploadImage}
-                        disabled={imageUploadProgress}
+                        disabled={imageUploadProgress !== null}
                     >
-                        {
-                            imageUploadProgress ?
-                                <div className='w-16 h-16'>
-                                    <CircularProgressbar value={imageUploadProgress} text={`${imageUploadProgress || 0}%`} />
-                                </div> : 'Upload Image'
-                        }
+                        {imageUploadProgress !== null ? (
+                            <div className='w-16 h-16'>
+                                <CircularProgressbar value={imageUploadProgress} text={`${imageUploadProgress || 0}%`} />
+                            </div>
+                        ) : 'Upload Image'}
                     </Button>
                 </div>
-                {
-                    imageUploadError && (
-                        <Alert color='failure'>
-                            {imageUploadError}
-                        </Alert>
-                    )
-                }
+                {imageUploadError && <Alert color='failure'>{imageUploadError}</Alert>}
                 {formData.image && (
-                    <img
-                        src={formData.image}
-                        alt='upload'
-                    className='w-full h-72 object-cover'/>
+                    <img src={formData.image} alt='Uploaded' className='w-full h-72 object-cover' />
                 )}
                 <ReactQuill
                     theme='snow'
                     placeholder='Write Something...'
                     className='h-72 mb-12'
-                    onChange={handleContentChange}
                     required
+                    onChange={handleContentChange}
                 />
                 <Button
                     type='submit'
@@ -137,6 +151,7 @@ export default function CreatePost() {
                 >
                     Publish
                 </Button>
+                {publishError && <Alert className='mt-5' color='failure'>{publishError}</Alert>}
             </form>
         </div>
     );
