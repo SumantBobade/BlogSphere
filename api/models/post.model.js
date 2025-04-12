@@ -18,7 +18,17 @@ const postSchema = new mongoose.Schema(
         category: {
             type: String,
             required: true,
-            unique: true,
+            
+        },
+        slug: {
+            type: String,
+            required: false,
+            unique: true
+        },
+        userId: {
+            type: mongoose.Schema.Types.ObjectId, // Reference to the User model
+            required: false, // This means `userId` must be provided when creating a post
+            ref: 'User'
         }
     }, { timestamps: true }
 );

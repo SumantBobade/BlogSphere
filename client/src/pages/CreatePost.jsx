@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { getDownloadURL, getStorage, uploadBytesResumable, ref } from "firebase/storage"; 
-import { app } from '../firebase.js'; 
+import { app } from '../firebase.js'; // Ensure this is uncommented and correctly set up
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useNavigate } from 'react-router-dom';
@@ -12,14 +12,14 @@ export default function CreatePost() {
     const [file, setFile] = useState(null);
     const [imageUploadProgress, setImageUploadProgress] = useState(null);
     const [imageUploadError, setImageUploadError] = useState(null);
-    const [formData, setFormData] = useState({ title: '', category: '', content: '' });
+    const [formData, setFormData] = useState({ title: '', category: '', content: '', image: '' });
     const [publishError, setPublishError] = useState(null);
     const navigate = useNavigate();
 
     const handleUploadImage = async () => {
         if (!file) {
             setImageUploadError('Please select an image');
-            return;
+            return false; // Indicate failure
         }
 
         try {
@@ -28,28 +28,33 @@ export default function CreatePost() {
             const storageRef = ref(storage, fileName);
             const uploadTask = uploadBytesResumable(storageRef, file);
 
-            uploadTask.on(
-                'state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setImageUploadProgress(progress.toFixed(0));
-                },
-                (error) => {
-                    setImageUploadError('Image upload failed');
-                    setImageUploadProgress(null);
-                },
-                () => {
-                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            return new Promise((resolve, reject) => { // Return a Promise
+                uploadTask.on(
+                    'state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        setImageUploadProgress(progress.toFixed(0));
+                    },
+                    (error) => {
+                        setImageUploadError('Image upload failed');
                         setImageUploadProgress(null);
-                        setImageUploadError(null);
-                        setFormData((prevData) => ({ ...prevData, image: downloadURL }));
-                    });
-                }
-            );
+                        reject('Image upload failed'); // Reject the promise on error
+                    },
+                    () => {
+                        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                            setImageUploadProgress(null);
+                            setImageUploadError(null);
+                            setFormData((prevData) => ({ ...prevData, image: downloadURL }));
+                            resolve(); // Resolve the promise
+                        });
+                    }
+                );
+            });
         } catch (error) {
             setImageUploadError('Image upload failed');
             setImageUploadProgress(null);
             console.error(error);
+            return false; // Indicate failure
         }
     };
 
@@ -65,28 +70,27 @@ export default function CreatePost() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch('/api/post/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                setPublishError(data.message);
-                return;
-            }
+          const res = await fetch('/api/post/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            setPublishError(data.message);
+            return;
+          }
+    
+          if (res.ok) {
             setPublishError(null);
-            
-            if (res.ok) {
-                setPublishError(null);
-                navigate(`/post/$(data.slug`);
-            }
+            navigate(`/post/${data.slug}`);
+          }
         } catch (error) {
-            setPublishError('Something went wrong');
+          setPublishError('Something went wrong');
         }
-    };
+      };
 
     return (
         <div className='p-3 max-w-3xl mx-auto min-h-screen'>
