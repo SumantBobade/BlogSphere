@@ -1,6 +1,7 @@
 import express from 'express';
 import Post from '../models/post.model.js'; // Make sure your Post model is correctly defined
 import slugify from 'slugify';
+import { getposts } from '../controllers/post.controller.js';
 
 const router = express.Router();
 const generateUniqueSlug = async (title) => {
@@ -41,15 +42,7 @@ router.post('/create', async (req, res) => {
 });
 
 // Additional route to fetch all posts (optional)
-router.get('/', async (req, res) => {
-    try {
-        const posts = await Post.find();
-        res.status(200).json({ success: true, posts });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server error while fetching posts' });
-    }
-});
+router.get('/getposts', getposts);
 
 // Additional route to get specific post by ID (optional)
 router.get('/:id', async (req, res) => {
@@ -66,5 +59,7 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error while fetching post' });
     }
 });
+
+
 
 export default router;
